@@ -1,0 +1,26 @@
+# --- Frontend (Next.js) ---
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env*.local
+frontend/npm-debug.log*
+frontend/.vercel
+
+# --- Backend (Python/FastAPI) ---
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/.env
+backend/.pytest_cache/
+backend/*.egg-info/
+backend/storage/resumes/*
+!backend/storage/resumes/.gitkeep
+
+# --- General ---
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.sqlite3
