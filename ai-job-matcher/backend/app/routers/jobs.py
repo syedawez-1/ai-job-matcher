@@ -11,7 +11,11 @@ router = APIRouter()
 
 
 @router.post("/", response_model=JobOut)
-async def create_job(payload: JobCreate, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+async def create_job(
+    payload: JobCreate,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     job = Job(**payload.model_dump())
     db.add(job)
     db.commit()
@@ -21,17 +25,49 @@ async def create_job(payload: JobCreate, user: dict = Depends(get_current_user),
 
 @router.get("/", response_model=list[JobOut])
 async def list_jobs(db: Session = Depends(get_db)):
-    return db.query(Job).order_by(Job.created_at.desc()).all()
+    """
+    Return only currently active jobs.
+    Inactive/expired jobs remain in the database for history
+    but are not shown to users.
+    """
+    return (
+        db.query(Job)
+        .filter(Job.is_active == True)
+        .order_by(Job.created_at.desc())
+        .all()
+    )
 
 
 @router.get("/matches/{resume_id}")
-async def get_matches(resume_id: str, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    resume = db.query(Resume).filter(Resume.id == resume_id, Resume.user_id == user["sub"]).first()
+async def get_matches(
+    resume_id: str,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    resume = (
+        db.query(Resume)
+        .filter(
+            Resume.id == resume_id,
+            Resume.user_id == user["sub"]
+        )
+        .first()
+    )
+
     if not resume:
-        raise HTTPException(status_code=404, detail="Resume not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Resume not found"
+        )
 
     resume_skills = (resume.parsed_data or {}).get("skills", [])
-    jobs = db.query(Job).all()
+
+    # Only match the user's resume against active jobs.
+    jobs = (
+        db.query(Job)
+        .filter(Job.is_active == True)
+        .all()
+    )
+
     job_dicts = [
         {
             "id": str(j.id),
@@ -41,5 +77,10 @@ async def get_matches(resume_id: str, user: dict = Depends(get_current_user), db
         }
         for j in jobs
     ]
+
     ranked = rank_jobs(resume_skills, job_dicts)
-    return {"resume_id": resume_id, "matches": ranked}
+
+    return {
+        "resume_id": resume_id,
+        "matches": ranked
+    }

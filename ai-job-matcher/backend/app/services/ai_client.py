@@ -7,12 +7,12 @@ or tune prompts later.
 import json
 import re
 
-from anthropic import Anthropic
+from google import genai
 
 from app.config import settings
 
-client = Anthropic(api_key=settings.anthropic_api_key)
-MODEL = "claude-sonnet-4-6"
+client = genai.Client(api_key=settings.gemini_api_key)
+MODEL = "gemini-flash-lite-latest"
 
 
 def _extract_json(text: str) -> dict:
@@ -37,12 +37,8 @@ def structure_resume(raw_text: str) -> dict:
 
 Resume text:
 {raw_text}"""
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return _extract_json(response.content[0].text)
+    response = client.models.generate_content(model=MODEL, contents=prompt)
+    return _extract_json(response.text)
 
 
 def analyze_skill_gap(resume_skills: list, job_requirements: list) -> dict:
@@ -51,12 +47,8 @@ def analyze_skill_gap(resume_skills: list, job_requirements: list) -> dict:
 And these job requirements: {job_requirements}
 Return strict JSON only, no preamble, no markdown fences:
 {{"missing_skills": [...], "matching_skills": [...], "recommendations": [...]}}"""
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=1000,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return _extract_json(response.content[0].text)
+    response = client.models.generate_content(model=MODEL, contents=prompt)
+    return _extract_json(response.text)
 
 
 def score_ats(raw_resume_text: str) -> dict:
@@ -68,9 +60,18 @@ actionable strings], "strengths": [list of short strings]}}.
 
 Resume text:
 {raw_resume_text}"""
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=1000,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return _extract_json(response.content[0].text)
+    response = client.models.generate_content(model=MODEL, contents=prompt)
+    return _extract_json(response.text)
+def extract_job_required_skills(title: str, description: str) -> list:
+    """Given a job title and description, return a short list of required technical/soft skills."""
+    prompt = f"""Given this job posting, extract a short list of 5-10 concrete
+required skills (technologies, tools, languages, or key competencies) as
+strict JSON only, no preamble, no markdown fences:
+{{"required_skills": [...]}}
+
+Job title: {title}
+
+Job description: {description[:3000]}"""
+    response = client.models.generate_content(model=MODEL, contents=prompt)
+    result = _extract_json(response.text)
+    return result.get("required_skills", [])

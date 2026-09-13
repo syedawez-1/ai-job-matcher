@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_key: str = ""
     supabase_storage_bucket: str = "resumes"
-    anthropic_api_key: str = ""
+    gemini_api_key: str = ""
     frontend_origin: str = "http://localhost:3000"
 
     class Config:
