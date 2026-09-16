@@ -4,7 +4,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+
   session: { strategy: "jwt" },
+
   pages: {
     signIn: "/login",
   },
