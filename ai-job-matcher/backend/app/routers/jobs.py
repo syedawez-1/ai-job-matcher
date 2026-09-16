@@ -69,14 +69,15 @@ async def get_matches(
     )
 
     job_dicts = [
-        {
-            "id": str(j.id),
-            "title": j.title,
-            "company": j.company,
-            "required_skills": j.required_skills or [],
-        }
-        for j in jobs
-    ]
+    {
+        "id": str(j.id),
+        "title": j.title,
+        "company": j.company,
+        "required_skills": j.required_skills or [],
+        "source_url": j.source_url,
+    }
+    for j in jobs
+]
 
     ranked = rank_jobs(resume_skills, job_dicts)
 

@@ -10,9 +10,12 @@ type Job = {
   title: string;
   company: string;
   required_skills: string[];
+  source_url?: string | null;
 };
 
-type Match = Job & { match_score: number };
+type Match = Job & {
+  match_score: number;
+};
 
 function JobsContent() {
   const { data: session } = useSession();
@@ -72,6 +75,15 @@ function JobsContent() {
     }
   }
 
+  function openJobApplication(sourceUrl?: string | null) {
+    if (!sourceUrl) {
+      alert("Application link is not available for this job.");
+      return;
+    }
+
+    window.open(sourceUrl, "_blank", "noopener,noreferrer");
+  }
+
   return (
     <main className="max-w-3xl mx-auto p-8">
       <h1 className="text-2xl font-bold mb-6">
@@ -80,13 +92,18 @@ function JobsContent() {
 
       <div className="flex flex-col gap-4">
         {jobs.map((job) => (
-          <div key={job.id} className="border rounded-lg p-4">
+          <div
+            key={job.id}
+            className="border rounded-lg p-4"
+          >
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-semibold">{job.title}</h3>
+                <h3 className="font-semibold">
+                  {job.title}
+                </h3>
 
                 <p className="text-sm text-gray-500">
-                  {job.company}
+                  {job.company || "Company not listed"}
                 </p>
               </div>
 
@@ -104,7 +121,7 @@ function JobsContent() {
               {(job.required_skills || []).join(", ")}
             </p>
 
-            <div className="flex gap-3 mt-3">
+            <div className="flex flex-wrap gap-3 mt-4">
               {resumeId && (
                 <button
                   onClick={() => checkSkillGap(job.id)}
@@ -115,9 +132,21 @@ function JobsContent() {
               )}
 
               <button
+                onClick={() =>
+                  openJobApplication(job.source_url)
+                }
+                disabled={!job.source_url}
+                className="text-sm font-medium bg-green-600 text-white rounded px-3 py-1 disabled:opacity-50"
+              >
+                {job.source_url
+                  ? "Apply Now"
+                  : "Application link unavailable"}
+              </button>
+
+              <button
                 onClick={() => applyToJob(job.id)}
                 disabled={applying === job.id}
-                className="text-sm underline text-green-600 disabled:opacity-50"
+                className="text-sm underline text-gray-700 disabled:opacity-50"
               >
                 {applying === job.id
                   ? "Adding..."
@@ -136,7 +165,7 @@ function JobsContent() {
                 <p className="mt-1">
                   <strong>Recommendations:</strong>{" "}
                   {(gapResult[job.id].recommendations || [])
-                    .join("; ")}
+                    .join("; ") || "None"}
                 </p>
               </div>
             )}
@@ -149,7 +178,13 @@ function JobsContent() {
 
 export default function JobsPage() {
   return (
-    <Suspense fallback={<div className="p-8">Loading jobs...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8">
+          Loading jobs...
+        </div>
+      }
+    >
       <JobsContent />
     </Suspense>
   );
