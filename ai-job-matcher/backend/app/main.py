@@ -8,12 +8,12 @@ app = FastAPI(title="AI Job Matcher API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
+    allow_origins=[settings.frontend_origin, "http://localhost:3000"],
+    allow_origin_regex=r"https://ai-job-matcher-o9hz.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(resumes.router, prefix="/resumes", tags=["resumes"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
