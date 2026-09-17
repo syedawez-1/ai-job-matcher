@@ -1,38 +1,62 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+console.log(
+  "[AUTH DEBUG] NEXTAUTH_SECRET loaded:",
+  Boolean(process.env.NEXTAUTH_SECRET)
+);
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+  },
 
   pages: {
     signIn: "/login",
   },
+
   providers: [
     CredentialsProvider({
       name: "Credentials",
+
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: {
+          label: "Email",
+          type: "email",
+        },
+        password: {
+          label: "Password",
+          type: "password",
+        },
       },
+
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
 
         const res = await fetch(`${API_URL}/auth/login`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             email: credentials.email,
             password: credentials.password,
           }),
         });
 
-        if (!res.ok) return null;
+        if (!res.ok) {
+          return null;
+        }
 
         const data = await res.json();
+
         return {
           id: data.user.id,
           email: data.user.email,
@@ -42,15 +66,19 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.accessToken = (user as any).accessToken;
       }
+
       return token;
     },
+
     async session({ session, token }) {
       (session as any).accessToken = token.accessToken;
+
       return session;
     },
   },
